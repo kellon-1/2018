@@ -1,0 +1,11 @@
+  con add – 添加新的连接
+
+    con-name – 连接名
+
+    type – 设备类型
+
+    ifname – 接口名
+
+    autoconnect no – 禁止开机自动启动
+	
+	rpm -qf /bin/命令   查询命令安装包

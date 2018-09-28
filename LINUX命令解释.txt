@@ -9,3 +9,4 @@
     autoconnect no – 禁止开机自动启动
 	
 	rpm -qf /bin/命令   查询命令安装包
+	add

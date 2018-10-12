@@ -1,0 +1,67 @@
+set global validate_password_policy=0;
+set global calidate_password_length=6;
+alter user root@'localhost' identified by '123456';
+#永久设置在主配置文件
+
+tcp 3306 mysqld
+/etc/my.cnf
+/var/lib/mysql
+/var/log/mysqld.log
+
+DDL:数据定义语言 create alter drop
+DML:数据操作语言insert update delete
+DCL:数据控制语言grant revoke 
+DTL:数据事物语言commit rollback savepoint
+
+show databases;
+show tables;
+create database db1;
+use db1;
+select database();
+drop database db1;
+
+create table db1.t1(name char(6) not null,
+age tinyint(2) unsigned zerofill,
+pay float(7,2),
+gender enum('boy','girl') not null default 'boy',
+interest set('book','film','music'),
+birthday date, writing_time timestamp);
+
+show create table t1;
+create table t2(姓名 char(10),年龄 int) default charset utf8;
+
+desc t1;
+insert into t1 values("kellon",27,12000.00,
+'boy','book,music',19911206,now());
+insert into t1(name,interest) values("tom".'music');
+select * from t1;
+update t1 set gender='boy';
+delete from t1;
+
+alter table t2 add stu_id int(2) first;
+alter table t2 add like char(19) after name;
+alter table t2 modify like char(10);
+alter table t2 drop like;
+alter table t2 rename study;
+alter table t2 change stu_id id int(2) not null;
+
+INDEX , UNIQUE, FULLTEXT, PRIMARY KEY, FOREIGN KEY
+create table t3( id char(4) not null,
+name char(10) not null,age int(2) not null,
+index(id),index(name));
+
+create index name on t3(name);
+drop index name on t3;
+
+show index from t3\G;
+
+create table t4(id int auto_increment,name char(10) not null,
+age int,primary key(id,name));
+alter table t4 add primary key(id,name);
+alter table t4 drop primary key;
+
+
+
+
+
+

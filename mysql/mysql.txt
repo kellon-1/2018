@@ -1,0 +1,80 @@
+skip-grant-tables
+validate_password_policy=0
+validate_password_length=6
+default-storage-engine=myisam
+
+create table user(id int,name char(10),age tinyint ,sex enum('man','woman') default 'man',pay float(7,2),birthday date,like set('look','game','mv'))engine=innodb default charset=utf8;
+
+secure_file_priv='/myload'   #set seach and load file path
+show variables like "secure%";
+
+show engines;
+
+select * from user where ....  order by [desc] limit [3,5];
+select date(now());
+select distinct shell from user; 查询子段，不显示重复值
+select shell from user;    按shell字段分组
+select avg(id),sum(id),min(id),max(id),count(id) from user;
+select shell from user group by shell having count(*)>1;过滤分组大于1的
+create table user4 select name,shell from user limit 3,5    #copy table 
+create table user5 select * from user where false;      #copy 表结构
+alter table user rename aaa                  #set new name
+select * from a,b;     #笛卡尔集  a:3 b:5   result:15
+select name,uid,shell from  user where uid>(select avg(uid) from user);
+select * from a left join b on a.name=b.name     #right 右查询
+
+
+
+myisam:支持表级锁，不支持事物，事物回滚，外键，适用读操作多的表
+	表名.frm	表结构
+	表名.myd 	数据data
+	表名.myi	索引index
+innodb:支持事物，回滚，外键，行级锁，适用修改和写多的表
+	表名.frm	表结构
+	表名.ibd 	数据data and index
+	
+事务：对数据库服务的访问过程（连接数据库服务器 操作数据 断开连接）
+事务回滚 ： 在事务执行过程中，任何一步操作失败，都会恢复之前的所有操作。
+show status like '%lock%';
+show variables like 'autocommit';
+set autocommit=off; 设置自动提交为关
+rollback;    回滚数据
+commit;      提交数据
+
+#备份backup
+cp /var/lib/mysql/* 
+tar -zcvf /var/lib/mysql/
+
+mysqldump -uroot -p123456 gamedb > /mysqldata/gamedb.sql
+mysql -uroot -p123456 gamedb < /mysqldata/gamedb.sql
+
+--all-databases or -A 
+studb
+studb.user
+-B studb teadb
+
+#binlog backups    记录查询之外的日志操作
+vim /etc/my.cnf 
+	log_bin  [=/mylog/aaa]   #set logfile path
+	server_id=51
+	binlog_format='mixed'  #statemane row mixed
+	
+#logfile default if the logfile bigger 500m than auto create new logfile
+#or flush logs  or  mysql -uroot -p123 -e "flush logs" or restart mysqld
+
+mysqlbinlog --start-datatime="2018-01-02 11:42" /var/lib/mysql/mysql-bin.00001
+
+mysqlbinlog /var/lib/mysql/host.bin.000001 | mysql -uroot -p123456
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,45 @@
+#主从同步：
+#master W->binglog<->R I/O thread W-->relay log<-->R SQL thread W -->slave
+#master and slave must keep the same data
+master.info     主库信息
+relay-log.info	中继日志信息
+主机名-relay-bin.xxxxxxx       中继日志
+主机名-relay-bin.index		索引文件
+
+主从从结构需额外设置 log_slave_updates    启动slave从库进程
+
+异步复制：主库执行完一次事物后，立即将结果返给从库，不关心从库是否已经接受并处理   mysql默认异步复制
+全同步复制：当主库执行完一次事物，且所有从库都执行了该事物后才返回给客户端
+半同步复制：主库执行完一次事物后，等待至少一个从库接收并写到RELAY LOG中才返回给客户端
+#show variables like 'have_dynamic_loading'; 动态加载模块
+#启用加载模块
+mysql> install plugin rpl_semi_sync_slave soname 'semisync_slave.so';  #主库
+mysql> install plugin rpl_semi_sync_master soname 'semisync_master.so'; #从
+mysql> select plugin_name,plugin_status from information_schema.plugins where plugin_name like '%semi%';
+mysql> set global rpl_semi_sync_master_enabled = 1;启用半同步
+mysql> set global rpl_semi_sync_slave_enabled = 1;
+#永久启用
+plugin-load=rpl_semi_sync_master=semisync_master.so
+rpl_semi_sync_master_enabled=1
+plugin-load=rpl_semi_sync_slave=semisync_slave.so
+rpl_semi_sync_slave_enabled=1
+
+
+#set master :
+[mysqld]
+log_bin
+server_id=
+binlog_format="mixed"
+#binlog_do_db=name   设置master对哪些库记日志
+#binlog_ignore_db=name
+show master status;
+grant replication slave on *.* to slave@'%' identified by '123456';
+
+#set slave
+server_id=
+
+change master to ...
+start slave 
+show slave status /G;
+
+

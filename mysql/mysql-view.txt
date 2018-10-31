@@ -1,0 +1,29 @@
+-create   #创建视图完整格式
+[or replace]     #若存在视图则覆盖
+[algorithm={undefined|merge|temptable}]  #merage替换方式 temptable具体化方式 undefined 未定义
+[definer={user|current_user}]   	#
+[SQL securty {definer|invoker}]		#
+view view_name [{column_list}]		#
+as select_statement			#
+[with [cascaded|local] check option]	#local 仅检查当前视图的限制，cascaded 同时要满足基表的限制（默认）
+
+create or replace view v1 as select * from a where id<8 with check option;
+
+#VIEW:虚拟表
+#-内容是基于真实表创建，硬盘上只有表结构文件
+#-更新视图或基表的数据，会同时更新
+#-简单：用户不需关心视图中的数据如何获取
+#-安全：用户只能看到视图中的数据
+#-数据独立：视图结构确定，可以屏蔽表结构对用户的影响
+#-限制：不能在视图创建索引
+#	在视图中的from字句不能使用子查询
+#	包含关键字的创建语句不可更新：聚合函数sum.count等
+#	常量视图，JOIN FROM 一个不能更新的视图
+#	where子句的子查询引用了from子句中的表
+#	使用了临时表
+-show table status
+-show table status where comment="view";
+-show create view view_name;
+
+
+

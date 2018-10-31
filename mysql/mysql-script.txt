@@ -1,0 +1,51 @@
+#SQL存储过程：mysql语句组成的脚本
+指的是数据库中保存的一系列SQL命令的集和
+可以在存储过程中使用变量，条件判断，流程控制
+优点：提高性能
+	减轻网络负担
+	可以防止对表的直接访问
+	避免重复编写SQL操作
+语法格式：
+delimiter //
+create procedure name()
+begin
+sql commit #功能代码
+end
+//         #结束存储过程
+delimiter ;
+call name(); #调用存储过程
+
+> delimiter //
+> create procedure say()
+> begin
+> select * from bbsdb.user limit 3;
+> end
+> //
+> delimiter ;
+> call say();
+
+#查看存储过程
+show procedure status;
+select db,name,type from mysql.proc where name="say";
+drop procedure say;
+
+#调用局部便利时，变量名前不需家@
+#会话变量和全局变量叫系统变量 ：   select @@hostname
+#用户变量：在当前连接数据库时有效   定义set @name=value 输出select @name
+
+#局部变量：在存储过程中定义的变量，  定义declare name
+show global variables ; #查看全局变量
+show session variables; #查看会话变量
+set session sort_buffer_size=40000 ; #设置会话变量
+set @y=3;
+select max(id) into @y from user; #用查询结果给变量赋值
+
+
+
+
+
+
+
+
+
+

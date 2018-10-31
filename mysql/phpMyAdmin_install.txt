@@ -1,0 +1,15 @@
+#Mysql 图形管理工具    浏览器界面，跨平台
+#需要LAMP 平台
+1.安装LAMP   :
+	httpd php php-mysql mysql
+2.解压phpmyadmin包 mv到网页目录下
+	mv phpmyadmin  /var/www/html/
+	chown -R apache:apache phpmyadmin
+3.配置config.inc.php，指定mysql主机地址
+	$cfg['blowfish_secret'] = 'ke'
+	$cfg['Servers'][$i]['host'] = 'localhost';
+4.创建授权用户
+	grant insert,select on gamedb.* to kellon@'%' identified by 'qqq111'
+6.浏览器访问http://localhost/phpmyadmin
+	user:kellon
+	password:qqq111

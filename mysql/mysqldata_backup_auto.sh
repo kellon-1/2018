@@ -19,7 +19,7 @@ day=$(date +%F)
 #innobackupex --user root --password 123456 --databases="kellon mysql performance_schema sys" /kellon/db_kellon_back$day --no-timestamp
 
 ############# xtarbackup ###############
-
+#增量备份#
 i=1
 while [ -e /kellon/mysql_new${i}dir ]
 do

@@ -1,0 +1,311 @@
+1、物理机
+禁用 selinux 和 firewalld
+修改配置文件 /etc/selinux/config
+SELINUX=disabled
+
+禁用 firewalld
+systemctl stop firewalld
+systemctl mask firewalld
+
+重启系统
+#-------------------------------------------#
+网络 yum 源
+1 安装 FTP 服务
+yum install -y vsftpd
+/etc/vsftpd/vsftpd.conf
+listen=YES
+listen_ipv6=NO
+
+systemctl start vsftpd 
+
+验证 ftp 服务
+lftp 命令
+lftp ip.xx.xx.xx -u username 默认连接 ftp 服务
+lftp sftp://ip.xx.xx.xx -u username 连接 ssh 服务
+
+2 mount iso
+mkdir -p /var/ftp/CentOS7
+mount -t iso9660 -o ro,loop /var/iso/CentOS7-
+
+1708.iso  /var/ftp/CentOS7
+
+3 创建自定义 yum 源
+mkdir -p /var/ftp/public
+cp xx.rpm /var/ftp/public
+cd /var/ftp/public
+createrepo  .             创建新的
+createrepo  --update  .   更新
+
+客户端配置
+/etc/yum.repos.d/ooxx.repo
+[local_centos]
+name=CentOS 7 Source
+baseurl=ftp://ip.xx.xx.xx/CentOS7
+enabled=1
+gpgcheck=0
+
+[local_soft]
+name=local soft
+baseurl=ftp://ip.xx.xx.xx/public
+enabled=1
+gpgcheck=0
+
+#-------------物理机-------------#
+转发 dns 安装配置
+yum install -y bind bind-chroot
+配置文件 /etc/named.conf
+listen-on port 53 { 192.168.1.10; };
+//listen-on-v6 port 53 { ::1; };
+allow-query     { any; };
+forwarders { 202.106.196.115; };
+dnssec-enable no;
+dnssec-validation no;
+
+时间服务器，server、 client
+yum install -y chrony 
+server:配置 /etc/chrony.conf
+server ntp1.aliyun.com iburst
+bindacqaddress 0.0.0.0
+allow 0/0
+
+client:配置 /etc/chrony.conf
+server server.ip.xx.xx iburst
+
+检查状态
+chronyc sources -v
+* 同步成功，+ 备胎 , ? 同步失败
+
+shell 命令 exec 重定向
+
+#------------快速创建虚拟机---------------#
+virsh undefine node
+创建前端盘
+cd  /var/lib/libvirt/images/
+qemu-img create -f qcow2 -b node.qcow2 node1.img 30G
+创建 xml 配置文件
+sed 's/demo/node1/' demo.xml >/etc/libvirt/qemu/node1.xml
+定义虚拟机
+virsh define /etc/libvirt/qemu/node1.xml
+virsh start node1
+
+添加网卡
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+
+添加硬盘
+cd /var/lib/libvirt/images/
+qemu-img create -f qcow2 disk.img 20G
+
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk.img'/>
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+
+#-----------------------------------------#
+创建 2 个虚拟机
+要求：
+虚拟机1 
+  8G 内存
+  2块网卡
+     第一块网卡连接虚拟交换机 vbr
+     第二块网卡连接虚拟交换机 private1
+     设置静态 IP，默认网关 192.168.1.254
+/etc/sysconfig/network-scripts/ifcfg-ethX
+BOOTPROTO="static"
+IPADDR="192.168.1.xx"
+PREFIX="24"
+
+默认网关:
+GATEWAY="192.168.1.254"
+
+  2块硬盘
+  其中 / 的 vda1 要求 50G
+  vdb  20G
+
+虚拟机2
+  6G 内存
+  2块网卡
+     第一块网卡连接虚拟交换机 vbr
+     第二块网卡连接虚拟交换机 private1
+     设置静态 IP，默认网关 192.168.1.254
+     要求与第一台虚拟主机的两个 IP 都能 ping 通
+  硬盘
+     / 的 vda1 要求 50G
+
+#---------------openstack 安装---------------------#
+yum 源的安装配置
+在服务器上 mount 3 个 iso 文件
+mount -t iso9660 -o ro,loop RHEL7OSP-10.iso  /var/ftp/openstack
+mount -t iso9660 -o ro,loop RHEL7-extras.iso  /var/ftp/openstack-ext
+
+[root@openstack yum.repos.d]# cat openstack.repo 
+[openstack_extras]
+name=openstack extras
+baseurl="ftp://192.168.1.254/openstack-ext"
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-openstack-10-devtools-rpms]
+name=rhel-7-server-openstack-10-devtools-rpms
+baseurl=ftp://192.168.1.254/openstack/rhel-7-server-openstack-10-devtools-rpms
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-openstack-10-optools-rpms]
+name=rhel-7-server-openstack-10-optools-rpms
+baseurl=ftp://192.168.1.254/openstack/rhel-7-server-openstack-10-optools-rpms
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-openstack-10-rpms]
+name=rhel-7-server-openstack-10-rpms
+baseurl=ftp://192.168.1.254/openstack/rhel-7-server-openstack-10-rpms
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-openstack-10-tools-rpms]
+name=rhel-7-server-openstack-10-tools-rpms
+baseurl=ftp://192.168.1.254/openstack/rhel-7-server-openstack-10-tools-rpms
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-rhceph-2-mon-rpms]
+name=rhel-7-server-rhceph-2-mon-rpms
+baseurl=ftp://192.168.1.254/openstack/rhel-7-server-rhceph-2-mon-rpms
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-rhceph-2-osd-rpms]
+name=rhel-7-server-rhceph-2-osd-rpms
+baseurl=ftp://192.168.1.254/openstack/rhel-7-server-rhceph-2-osd-rpms
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-rhceph-2-tools-rpms]
+name=rhel-7-server-rhceph-2-tools-rpms
+baseurl=ftp://192.168.1.254/openstack/rhel-7-server-rhceph-2-tools-rpms
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-rhscon-2-agent-rpms]
+name=rhel-7-server-rhscon-2-agent-rpms
+baseurl=ftp://192.168.1.254/openstack/rhel-7-server-rhscon-2-agent-rpms
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-rhscon-2-installer-rpms]
+name=rhel-7-server-rhscon-2-installer-rpms
+baseurl=ftp://192.168.1.254/openstack/rhel-7-server-rhscon-2-installer-rpms
+enabled=1
+gpgcheck=0
+
+[rhel-7-server-rhscon-2-main-rpms]
+name=rhel-7-server-rhscon-2-main-rpms
+baseurl=ftp://192.168.1.254/openstack/rhel-7-server-rhscon-2-main-rpms
+enabled=1
+gpgcheck=0
+
+配置完成以后 yum repolist 能看到 12 个源及 10,731 个包
+
+#--------------openstack-----------------#
+物理机 == 真机
+虚拟机
+
+物理机：
+    安装 bind（dns）服务
+    安装 chrond（ntp）服务
+
+虚拟机：
+    /etc/resolv.conf 配置 物理机的IP
+    nameserver 192.168.1.254
+    /etc/chrony.conf 配置指向物理机的IP
+    server 192.168.1.254 iburst
+
+    验证：
+    ping  www.baidu.com
+    chronyc sources -v
+
+虚拟机 2 台，openstack(8G) ,nova(6G)
+openstack: 
+    pvcreate /dev/vdb
+    vgcreate cinder-volumes /dev/vdb
+
+openstack, nova:
+    yum install -y qemu-kvm \
+                   libvirt-client \
+                   libvirt-daemon \
+                   libvirt-daemon-driver-qemu \
+                   python-setuptools
+
+openstack:
+    yum install -y openstack-packstack
+    packstack --gen-answer-file answer.ini
+    编辑 answer.ini
+配置默认密码
+11:  CONFIG_DEFAULT_PASSWORD=Taren1
+设置禁用 swift (对象存储) 模块
+42:  CONFIG_SWIFT_INSTALL=n
+NTP 服务器地址
+75:  CONFIG_NTP_SERVERS=192.168.1.254
+计算节点IP地址
+98:  CONFIG_COMPUTE_HOSTS=192.168.1.19
+需要配置vxlan网络的 IP 地址
+102: CONFIG_NETWORK_HOSTS=192.168.1.19
+禁用自动创建 cinder-volumns 卷组
+554: CONFIG_CINDER_VOLUMES_CREATE=n
+设置网络支持协议
+840: CONFIG_NEUTRON_ML2_TYPE_DRIVERS=flat,vxlan
+设置组播地址
+876: CONFIG_NEUTRON_ML2_VXLAN_GROUP=239.1.1.5
+设置虚拟交换机
+910: CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS=physnet1:br-ex
+设置虚拟交换机所连接的物理网卡
+921: CONFIG_NEUTRON_OVS_BRIDGE_IFACES=br-ex:eth0
+设置隧道网络使用的网卡
+936: CONFIG_NEUTRON_OVS_TUNNEL_IF=eth1
+禁用测试的DEMO
+1179:CONFIG_PROVISION_DEMO=n
+
+    保持配置文件，安装 openstack
+    packstack --answer-file=answer.ini
+
+    horizon 软件配置 bug
+    修改 /etc/httpd/conf.d/15-horizon_vhost.conf
+    添加 WSGIApplicationGroup %{GLOBAL}
+    重新载入配置 apachectl graceful
+
+#-----------------------------------------------#
+关于 /root/keystone_admin 文件的注意事项：
+  1、该文件只是一个文本，里面记录了 admin 的用户名和密码，与认证无关
+  2、不能通过修改该文件达到修改 admin 密码的目的
+  3、修改 admin 密码请使用 web 页面登录后，在web页面中修改
+     修改后，keystone_admin 中的密码通用要修改成新的密码才可以继续使用
+  4、该文件可以作为命令行的登录文件使用，使用方式 source ~/keystone_admin
+  5、如果你安装完成 openstack 后，没有修改过 admin 的密码
+     keystone_admin 文件不小心被更改了
+     我们可以通过查找应答文件 answer.ini 中的变量 CONFIG_KEYSTONE_ADMIN_PW 来找到默认安装密码
+
+#---------------------nova安装------------------#
+1 检查nova主机能否与 openstack 互相ping 通(两块网卡都要测试)
+2 检查 selinux 是否禁用 (sestatus)
+3 检查 firewalld 是否卸载 (rpm -qa|grep firewalld)
+4 检查 NetworkManager 是否卸载 (rpm -qa|grep NetworkManager)
+5 检查 yum 源 (yum repolist   10731包)
+6 检查 系统 yum 源是否导入公钥 (gpgcheck=1)
+7 检查 时间服务器 (chronyc sources -v)
+8 检查 openstack 和 本机的主机名 是否能 ping 通
+
+openstack:
+  编辑 answer.ini
+98:  CONFIG_COMPUTE_HOSTS=192.168.1.19,192.168.1.18
+102: CONFIG_NETWORK_HOSTS=192.168.1.19,192.168.1.18
+  packstack --answer-file=answer.ini
+
+常见云服务商评测报告
+https://wenku.baidu.com/view/c9bab20c49d7c1c708a1284ac850ad02df800719.html
+
+监控宝
+https://baike.baidu.com/item/%E7%9B%91%E6%8E%A7%E5%AE%9D/3661540?fr=aladdin

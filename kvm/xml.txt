@@ -1,0 +1,6 @@
+
+###
+/usr/bin/growpart /dev/vda 1      硬盘扩容
+/usr/sbin/xfs_growfs /            文件系统扩容
+/usr/bin/sed -i '/^###/,$d' /etc/rc.d/rc.local    删
+~                                                

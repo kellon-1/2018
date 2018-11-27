@@ -115,7 +115,7 @@ service 模块  name 指定服务名称，enabled= yes|no 设置开机启动， 
 设置 chronyd 服务开启启动，并启动服务
 ansible other -m service -a 'name="chronyd" enabled="yes"  state="started"'
 
-setup 模块，查看信息  filter 过滤指定的关键字
+setup 模块，查看信息  filter 过滤指定的关键字  过滤出的是json格式字符串
 
 playbook httpd.yml
 ---

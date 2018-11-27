@@ -1,0 +1,1 @@
+{echo ruok;sleep 0.2;} | telnet 192.168.1.11 2181 | grep imok

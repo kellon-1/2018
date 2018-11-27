@@ -1,0 +1,9 @@
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - shell: uptime | awk '{printf("%2.f",$(NF-2))}'
+      register: resulter
+    - service: name=httpd state=stopped
+      when: resulter.stdout|float > 0.6
+

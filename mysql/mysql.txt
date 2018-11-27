@@ -3,6 +3,9 @@ validate_password_policy=0
 validate_password_length=6
 default-storage-engine=myisam
 
+
+mysqld --user=mysql  --initialize-insecure 手动初始化mysql	
+
 create table user(id int,name char(10),age tinyint ,sex enum('man','woman') default 'man',pay float(7,2),birthday date,like set('look','game','mv'))engine=innodb default charset=utf8;
 
 secure_file_priv='/myload'   #set seach and load file path

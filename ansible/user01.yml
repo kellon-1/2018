@@ -1,0 +1,14 @@
+---
+- hosts: web
+  remote_user: root
+  vars:
+    un: gg
+  tasks:
+#    - name: add an user
+#      user: 
+#        name: "{{un}}"
+#        password: "{{'123456' | password_hash('sha512')}}"
+#      ignore_errors: true
+#    - shell: chage -d 0 "{{un}}"
+     - shell: useradd "{{un}}"
+       ignore_errors: true

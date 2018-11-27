@@ -1,0 +1,8 @@
+yum_packages	cmd
+
+tree		树状显示目录下的文件
+psmisc     	pstree
+net-tools	ifconfig.....
+vim 		vim
+lftp		lftp
+
